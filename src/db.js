@@ -1,10 +1,17 @@
 import sqlite3 from 'sqlite3';
+import fs from 'fs';
+import path from 'path';
 import { config } from './config.js';
 
 let dbInstance = null;
 
 export async function getDatabase() {
   if (dbInstance) return dbInstance;
+  // Ensure parent directory exists
+  const dbDir = path.dirname(config.DATABASE_FILE);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
   dbInstance = new sqlite3.Database(config.DATABASE_FILE);
   return dbInstance;
 }
