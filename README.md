@@ -49,16 +49,22 @@ iFlytek (example TTS)
 FaceFusion
 - POST `/v1/facefusion/swap` `{ targetImageUrl, sourceFaceUrl }`
 
-### Production deployment (Ubuntu 22.04+)
+### Production deployment (Ubuntu/Debian)
 
 #### 1) Prepare the server
-- Install Node 20+ (e.g., via `nvm` or NodeSource)
-- Open firewall for HTTP/HTTPS
+- OS: Ubuntu 22.04+ or Debian 12 (bookworm). For Debian 11, see Certbot note below.
+- Open firewall for HTTP/HTTPS (if using UFW):
 ```bash
 sudo ufw allow OpenSSH
 sudo ufw allow 80
 sudo ufw allow 443
 sudo ufw enable
+```
+- Install Node.js 20 (NodeSource):
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node -v && npm -v
 ```
 
 #### 2) Clone and configure
@@ -84,7 +90,8 @@ npm run migrate
 sudo npm i -g pm2
 pm2 start src/index.js --name cloud-proxy
 pm2 save
-pm2 startup    # follow printed command to enable on boot
+pm2 startup systemd -u $USER --hp $HOME
+# run the command PM2 prints to enable at boot
 ```
 Useful PM2 commands:
 ```bash
@@ -95,7 +102,7 @@ pm2 stop cloud-proxy
 ```
 
 #### 3B) Or run with systemd
-Create service file:
+Create service file (adjust username/home path if not `ubuntu`):
 ```bash
 sudo tee /etc/systemd/system/cloud-proxy.service >/dev/null <<'UNIT'
 [Unit]
@@ -128,8 +135,16 @@ journalctl -u cloud-proxy -f
 #### 4) Reverse proxy with Nginx + SSL
 Install Nginx and Certbot:
 ```bash
-sudo apt update && sudo apt install -y nginx
-sudo apt install -y certbot python3-certbot-nginx
+sudo apt-get update && sudo apt-get install -y nginx
+# Debian 12/Ubuntu: apt certbot package
+sudo apt-get install -y certbot python3-certbot-nginx
+```
+Debian 11 (bullseye) Certbot via snap (if apt package not available):
+```bash
+sudo apt-get install -y snapd
+sudo snap install core && sudo snap refresh core
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 Create site config (replace `api.example.com`):
 ```bash
