@@ -1,0 +1,12 @@
+# env
+.env
+
+# sqlite
+data/
+
+# node
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-error.log*
