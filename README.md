@@ -51,102 +51,70 @@ FaceFusion
 
 ### Production deployment (Ubuntu/Debian)
 
-#### 1) Prepare the server
-- OS: Ubuntu 22.04+ or Debian 12 (bookworm). For Debian 11, see Certbot note below.
-- Open firewall for HTTP/HTTPS (if using UFW):
+#### One-by-one steps (copy-paste)
+
+1. Update packages and install basics
 ```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw enable
+sudo apt-get update && sudo apt-get install -y git curl nginx ca-certificates lsb-release
 ```
-- Install Node.js 20 (NodeSource):
+
+2. Install Node.js 20 (NodeSource)
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 node -v && npm -v
 ```
 
-#### 2) Clone and configure
+3. Install Certbot (choose one)
+- Debian 12 / Ubuntu:
 ```bash
-cd ~
-git clone https://github.com/kl-charizard/sim-backend-debug.git
-cd sim-backend-debug
-cp env.example .env
-nano .env
-```
-- Set `ADMIN_API_KEY` to a strong secret (you can generate one: `openssl rand -hex 32`)
-- Set provider credentials (`OPENROUTER_API_KEY`, `OPENROUTER_REFERER`, etc.)
-- Set `CORS_ORIGIN` to your allowed origins (comma-separated) or `*` for any
-
-Install and init DB:
-```bash
-npm ci || npm install
-npm run migrate
-```
-
-#### 3A) Run with PM2 (recommended for Node)
-```bash
-sudo npm i -g pm2
-pm2 start src/index.js --name cloud-proxy
-pm2 save
-pm2 startup systemd -u $USER --hp $HOME
-# run the command PM2 prints to enable at boot
-```
-Useful PM2 commands:
-```bash
-pm2 status
-pm2 logs cloud-proxy --lines 200
-pm2 restart cloud-proxy
-pm2 stop cloud-proxy
-```
-
-#### 3B) Or run with systemd
-Create service file (adjust username/home path if not `ubuntu`):
-```bash
-sudo tee /etc/systemd/system/cloud-proxy.service >/dev/null <<'UNIT'
-[Unit]
-Description=Cloud Proxy Service
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/home/ubuntu/sim-backend-debug
-ExecStart=/usr/bin/node src/index.js
-Environment=NODE_ENV=production
-# Load env file
-EnvironmentFile=/home/ubuntu/sim-backend-debug/.env
-Restart=on-failure
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-```
-Enable and start:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable cloud-proxy
-sudo systemctl start cloud-proxy
-sudo systemctl status cloud-proxy
-journalctl -u cloud-proxy -f
-```
-
-#### 4) Reverse proxy with Nginx + SSL
-Install Nginx and Certbot:
-```bash
-sudo apt-get update && sudo apt-get install -y nginx
-# Debian 12/Ubuntu: apt certbot package
 sudo apt-get install -y certbot python3-certbot-nginx
 ```
-Debian 11 (bullseye) Certbot via snap (if apt package not available):
+- Debian 11 (snap):
 ```bash
 sudo apt-get install -y snapd
 sudo snap install core && sudo snap refresh core
 sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ```
-Create site config (replace `api.example.com`):
+
+4. Clone the repo
+```bash
+cd ~
+git clone https://github.com/kl-charizard/sim-backend-debug.git
+cd sim-backend-debug
+```
+
+5. Create env file
+```bash
+cp env.example .env
+```
+
+6. Edit env values
+```bash
+nano .env
+```
+- Set a strong `ADMIN_API_KEY` (generate: `openssl rand -hex 32`)
+- Set `OPENROUTER_API_KEY`, `OPENROUTER_REFERER`
+- Optionally set `CORS_ORIGIN` to your app origins (or `*`)
+- Save and exit (Ctrl+O, Enter, Ctrl+X)
+
+7. Install dependencies and init DB
+```bash
+npm install
+npm run migrate
+```
+
+8. Start the app with PM2 (auto-restart)
+```bash
+sudo npm i -g pm2
+pm2 start src/index.js --name cloud-proxy
+pm2 save
+pm2 startup systemd -u $USER --hp $HOME
+# run the command PM2 prints
+```
+
+9. Configure Nginx (replace `api.example.com` with your domain)
 ```bash
 sudo tee /etc/nginx/sites-available/cloud-proxy >/dev/null <<'NGINX'
 server {
@@ -163,30 +131,33 @@ server {
     }
 }
 NGINX
-```
-Enable and test:
-```bash
 sudo ln -s /etc/nginx/sites-available/cloud-proxy /etc/nginx/sites-enabled/cloud-proxy
 sudo nginx -t && sudo systemctl restart nginx
 ```
-Get SSL certificate:
+
+10. Point DNS for your domain
+- Create an A record for `api.example.com` → your server’s public IP
+- Wait for DNS to propagate (can take minutes)
+
+11. Get SSL certificate (HTTPS)
 ```bash
 sudo certbot --nginx -d api.example.com --redirect -m you@example.com --agree-tos -n
 ```
 
-#### 5) Smoke test and usage
-Health check:
+12. Smoke test
 ```bash
 curl -s https://api.example.com/health
 ```
-Issue a user key:
+
+13. Issue a user key
 ```bash
 curl -s -X POST https://api.example.com/admin/keys \
   -H 'x-admin-key: REPLACE_WITH_ADMIN_KEY' \
   -H 'content-type: application/json' \
   -d '{"rateLimitPerMin":60}'
 ```
-Call OpenRouter via proxy using the issued key:
+
+14. Call OpenRouter via your proxy
 ```bash
 curl -s https://api.example.com/v1/openrouter/chat/completions \
   -H 'x-api-key: REPLACE_WITH_USER_KEY' \
@@ -198,20 +169,16 @@ curl -s https://api.example.com/v1/openrouter/chat/completions \
   }'
 ```
 
-#### 6) Updating to a new version
+15. Update later
 ```bash
 cd ~/sim-backend-debug
 git pull
 npm ci || npm install
 npm run migrate
-# If using PM2
 pm2 restart cloud-proxy
-# If using systemd
-sudo systemctl restart cloud-proxy
 ```
 
-### Security tips
-- Set `CORS_ORIGIN` to your actual app origins in production
-- Keep the service behind HTTPS (Nginx + Certbot)
-- Rotate `ADMIN_API_KEY` and issued user keys when needed
-- Adjust `DEFAULT_RATE_LIMIT_PER_MIN` per plan tier or use per-key custom limits
+Notes:
+- If using systemd instead of PM2, see the systemd section above.
+- Set `CORS_ORIGIN` to your production app origins.
+- Keep `.env` private and back up `data/db.sqlite` if needed.
