@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound by Sound Slowly - API Key Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #059669, #0891b2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #059669, #0891b2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .api-key {
+            background: #1a202c;
+            color: #68d391;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin-bottom: 15px;
+            border: 1px solid #2d3748;
+        }
+
+        .copy-btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #3182ce;
+        }
+
+        .status {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            color: #2b6cb0;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #2c5282;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .usage-example {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .usage-example h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .usage-example code {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 4px;
+            display: block;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔑 API Key Generator</h1>
+            <p>Generate API keys for Sound by Sound Slowly API Hub</p>
+        </div>
+
+        <div class="info-box">
+            <h4>ℹ️ About This Hub</h4>
+            <p>This service acts as a hub between your applications and OpenRouter's GPT-4o-mini. It provides OpenAI-compatible endpoints while using your OpenRouter API key behind the scenes.</p>
+        </div>
+
+        <form id="apiKeyForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="appName">Application Name</label>
+                    <input type="text" id="appName" name="appName" placeholder="e.g., Speech Learning App" required>
+                </div>
+                <div class="form-group">
+                    <label for="developer">Developer/Organization</label>
+                    <input type="text" id="developer" name="developer" placeholder="e.g., Your Company" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Contact Email</label>
+                <input type="email" id="email" name="email" placeholder="developer@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="purpose">Purpose/Description</label>
+                <textarea id="purpose" name="purpose" rows="3" placeholder="Describe what this API key will be used for..." required></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rateLimit">Rate Limit (requests per hour)</label>
+                    <select id="rateLimit" name="rateLimit">
+                        <option value="100">100 requests/hour</option>
+                        <option value="500" selected>500 requests/hour</option>
+                        <option value="1000">1,000 requests/hour</option>
+                        <option value="5000">5,000 requests/hour</option>
+                        <option value="10000">10,000 requests/hour</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expiry">Expiry (days)</label>
+                    <select id="expiry" name="expiry">
+                        <option value="30">30 days</option>
+                        <option value="90" selected>90 days</option>
+                        <option value="180">180 days</option>
+                        <option value="365">1 year</option>
+                        <option value="0">Never expires</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">🔑 Generate API Key</button>
+        </form>
+
+        <div id="result" class="result">
+            <h3>✅ API Key Generated Successfully!</h3>
+            <div class="api-key" id="generatedKey"></div>
+            <button class="copy-btn" onclick="copyApiKey()">📋 Copy Key</button>
+            <button class="copy-btn" onclick="copyUsageExample()">📝 Copy Usage Example</button>
+            
+            <div class="usage-example">
+                <h4>🚀 Usage Example:</h4>
+                <code id="usageExample"></code>
+            </div>
+
+            <div class="info-box">
+                <h4>🔧 Configuration Details</h4>
+                <p><strong>API Base URL:</strong> https://api.soundbysoundslowly.com/v1</p>
+                <p><strong>OpenRouter Key:</strong> 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</p>
+                <p><strong>Rate Limit:</strong> <span id="rateLimitInfo"></span></p>
+                <p><strong>Expires:</strong> <span id="expiryInfo"></span></p>
+            </div>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        // OpenRouter API key (hardcoded as requested)
+        const OPENROUTER_API_KEY = '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';
+        const API_BASE_URL = 'https://api.soundbysoundslowly.com/v1';
+
+        // Generate a secure API key
+        function generateApiKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = 'sbs_';
+            for (let i = 0; i < 32; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Generate timestamp
+        function generateTimestamp() {
+            return new Date().toISOString();
+        }
+
+        // Calculate expiry date
+        function calculateExpiry(days) {
+            if (days === 0) return 'Never';
+            const date = new Date();
+            date.setDate(date.getDate() + days);
+            return date.toISOString().split('T')[0];
+        }
+
+        // Form submission handler
+        document.getElementById('apiKeyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                // Send request to server to generate API key
+                const response = await fetch('/admin/api-keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appName: data.appName,
+                        developer: data.developer,
+                        email: data.email,
+                        purpose: data.purpose,
+                        rateLimit: parseInt(data.rateLimit),
+                        expiry: parseInt(data.expiry)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const apiKey = result.apiKey;
+                    const keyData = result.keyData;
+                    
+                    // Display result
+                    document.getElementById('generatedKey').textContent = apiKey;
+                    document.getElementById('rateLimitInfo').textContent = `${keyData.rateLimit} requests/hour`;
+                    document.getElementById('expiryInfo').textContent = keyData.expiry;
+                    
+                    // Generate usage example
+                    const usageExample = `// JavaScript/Node.js Example
+const API_KEY = '${apiKey}';
+const API_URL = '${API_BASE_URL}';
+
+// Chat completion
+fetch('${API_BASE_URL}/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': '${apiKey}'
+  },
+  body: JSON.stringify({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'user',
+        content: 'Help me with pronunciation practice'
+      }
+    ],
+    max_tokens: 150
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));`;
+                    
+                    document.getElementById('usageExample').textContent = usageExample;
+                    document.getElementById('result').classList.add('show');
+                    
+                    // Show success status
+                    showStatus('API key generated successfully!', 'success');
+                } else {
+                    showStatus('Failed to generate API key: ' + (result.error?.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error generating API key:', error);
+                showStatus('Failed to generate API key: ' + error.message, 'error');
+            }
+        });
+
+        // Copy API key to clipboard
+        function copyApiKey() {
+            const apiKey = document.getElementById('generatedKey').textContent;
+            navigator.clipboard.writeText(apiKey).then(() => {
+                showStatus('API key copied to clipboard!', 'success');
+            }).catch(() => {
+                showStatus('Failed to copy API key', 'error');
+            });
+        }
+
+        // Copy usage example to clipboard
+        function copyUsageExample() {
+            const usageExample = document.getElementById('usageExample').textContent;
+            navigator.clipboard.writeText(usageExample).then(() => {
+                showStatus('Usage example copied to clipboard!', 'success');
+            }).catch(() => {
+                showStatus('Failed to copy usage example', 'error');
+            });
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // Test API connection on page load
+        window.addEventListener('load', function() {
+            // You could add a test API call here to verify the service is running
+            console.log('API Key Generator loaded');
+            console.log('OpenRouter Key configured:', OPENROUTER_API_KEY.substring(0, 20) + '...');
+        });
+    </script>
+</body>
+</html>
